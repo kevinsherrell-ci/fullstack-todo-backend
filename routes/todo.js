@@ -97,6 +97,22 @@ router.post('/add', function (req, res) {
         })
     }
 });
+
+/* UPDATE update one todo*/
+router.put('/update/:id', async (req, res) => {
+    try {
+        const found = await db().collection("todos").update({_id: ObjectId(req.params.id)}, {$set: req.body}, {upsert: true});
+        res.json({
+            success: true,
+            data: found
+        })
+    } catch (err) {
+        res.json({
+            success: false,
+            message: err.message
+        })
+    }
+})
 /* DELETE delete one todo */
 router.delete('/delete/:id', (req, res) => {
     try {
