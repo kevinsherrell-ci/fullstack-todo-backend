@@ -73,7 +73,7 @@ router.get('/:id', async (req, res) => {
         })
     }
 })
-/* POST  */
+/* POST  add one todo */
 router.post('/add', function (req, res) {
     const newTodo = {
         title: req.body.title,
@@ -97,7 +97,20 @@ router.post('/add', function (req, res) {
         })
     }
 });
-
+/* DELETE delete one todo */
+router.delete('/delete/:id', (req, res) => {
+    try {
+        db().collection("todos").findOneAndDelete({_id: ObjectId(req.params.id)});
+        res.json({
+            success: true
+        })
+    } catch (err) {
+        res.json({
+            success: false,
+            message: err.message
+        })
+    }
+})
 // initialize data
 router.post('/init', (req, res) => {
     try {
