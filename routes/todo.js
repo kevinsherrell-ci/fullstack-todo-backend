@@ -3,6 +3,7 @@ const {db} = require("../mongo");
 var router = express.Router();
 const {uuid} = require('uuidv4');
 const {ObjectId} = require("mongodb");
+const {validateTodo} = require('../validation/todo');
 
 const mockTodos = [{
     id: "4387f4d8-aeac-4559-9f1b-3c5d537c955c",
@@ -56,7 +57,24 @@ const mockTodos = [{
 router.get('/', function (req, res, next) {
     res.json(mockTodos);
 });
+router.get('/all',  async function (req, res) {
+    try {
+        const cursor = db().collection("todos").find({});
+        const data = await cursor.toArray();
 
+        console.log(data);
+        res.json({
+            success: true,
+            data: data
+
+        })
+    } catch (err) {
+        res.json({
+            success: false,
+            message: err.message
+        })
+    }
+})
 /* GET get todo by ID*/
 router.get('/:id', async (req, res) => {
     try {
@@ -84,12 +102,23 @@ router.post('/add', function (req, res) {
         lastModified: new Date(),
         completedDate: req.body.completedDate || null
     }
+
+    const isValid = validateTodo(newTodo);
+
     try {
         console.log("adding todo");
-        db().collection("todos").insertOne(newTodo);
-        res.json({
-            success: true
-        })
+        if (isValid.isValid === true) {
+            db().collection("todos").insertOne(newTodo);
+            res.json({
+                success: true,
+                isValid: isValid.isValid
+            })
+        } else {
+            res.json({
+                success: false,
+                errors: isValid.errors
+            })
+        }
     } catch (err) {
         res.json({
             success: false,
