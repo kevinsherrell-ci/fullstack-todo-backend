@@ -57,12 +57,12 @@ const mockTodos = [{
 router.get('/', function (req, res, next) {
     res.json(mockTodos);
 });
-router.get('/all',  async function (req, res) {
+router.get('/all', async function (req, res) {
     try {
         const cursor = db().collection("todos").find({});
         const data = await cursor.toArray();
 
-        console.log(data);
+        // console.log(data);
         res.json({
             success: true,
             data: data
@@ -106,13 +106,20 @@ router.post('/add', function (req, res) {
     const isValid = validateTodo(newTodo);
 
     try {
-        console.log("adding todo");
+        // console.log("adding todo");
         if (isValid.isValid === true) {
-            db().collection("todos").insertOne(newTodo);
-            res.json({
-                success: true,
-                isValid: isValid.isValid
-            })
+            db().collection("todos").insertOne(newTodo)
+                .then(result => {
+                    db().collection('todos').findOne({_id: ObjectId(result.insertedId.toString())})
+                        .then(found => {
+                            res.json({
+                                success: true,
+                                inserted: found
+                            })
+                        })
+                })
+
+
         } else {
             res.json({
                 success: false,
@@ -129,11 +136,16 @@ router.post('/add', function (req, res) {
 
 /* UPDATE update one todo*/
 router.put('/update/:id', async (req, res) => {
+    req.body.lastModified = new Date();
     try {
-        const found = await db().collection("todos").update({_id: ObjectId(req.params.id)}, {$set: req.body}, {upsert: true});
+        const found = await db().collection("todos").updateOne({_id: ObjectId(req.params.id)}, {$set: req.body}, {upsert: true});
+        const updated = await db().collection('todos').findOne({_id: ObjectId(req.params.id)})
+            console.log(updated);
+
+        // console.log(cursor);
         res.json({
             success: true,
-            data: found
+            data: updated
         })
     } catch (err) {
         res.json({
